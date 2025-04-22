@@ -1,22 +1,56 @@
 
-import React, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
 import VideoPlayer from '@/components/VideoPlayer';
 import VideoMetadata from '@/components/VideoMetadata';
 import VideoGrid from '@/components/VideoGrid';
 import AdBanner from '@/components/Ads/AdBanner';
 import SeoHead from '@/components/SeoHead';
-import { getVideoById, getRelatedVideos } from '@/data/mockData';
+import { Video } from '@/types/video';
+import { fetchVideoById, fetchRelatedVideos } from '@/lib/videoFetcher';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const VideoPage = () => {
   const { id } = useParams<{ id: string }>();
-  const video = getVideoById(id || '');
-  const relatedVideos = getRelatedVideos(id || '', 8);
+  const navigate = useNavigate();
+  const [video, setVideo] = useState<Video | null>(null);
+  const [relatedVideos, setRelatedVideos] = useState<Video[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     // Scroll to top when video page loads
     window.scrollTo(0, 0);
+    
+    const loadVideo = async () => {
+      if (!id) return;
+      
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const videoData = await fetchVideoById(id);
+        if (!videoData) {
+          setError('Video not found');
+          return;
+        }
+        
+        setVideo(videoData);
+        
+        // Fetch related videos
+        const related = await fetchRelatedVideos(id, 8);
+        setRelatedVideos(related);
+        
+      } catch (err) {
+        console.error('Failed to load video:', err);
+        setError('Unable to load this video. Please try another one.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadVideo();
     
     // Simulate a pop-under ad on first click
     // In production, this would be handled by the ad network
@@ -31,13 +65,46 @@ const VideoPage = () => {
     return () => {
       document.removeEventListener('click', handleFirstClick);
     };
-  }, [id]);
+  }, [id, navigate]);
   
-  if (!video) {
+  // Loading state
+  if (isLoading) {
     return (
       <MainLayout>
-        <div className="min-h-[50vh] flex items-center justify-center">
-          <h1 className="text-2xl">Video not found</h1>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="lg:col-span-3">
+            <Skeleton className="w-full aspect-video rounded-md" />
+            <div className="mt-4 space-y-2">
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-full" />
+              <div className="flex flex-wrap gap-2 mt-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-6 w-16 rounded-full" />
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="space-y-8">
+            <Skeleton className="w-full h-[600px]" />
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+  
+  // Error state
+  if (error || !video) {
+    return (
+      <MainLayout>
+        <div className="min-h-[50vh] flex flex-col items-center justify-center">
+          <h1 className="text-2xl mb-4">{error || 'Video not found'}</h1>
+          <button 
+            onClick={() => navigate('/')}
+            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Back to home
+          </button>
         </div>
       </MainLayout>
     );

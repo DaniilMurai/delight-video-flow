@@ -1,21 +1,14 @@
 
 import React from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
-import VideoGrid from '@/components/VideoGrid';
+import TrendingVideos from '@/components/TrendingVideos';
 import TagsList from '@/components/TagsList';
 import CategoryList from '@/components/CategoryList';
 import AdBanner from '@/components/Ads/AdBanner';
 import SeoHead from '@/components/SeoHead';
-import { videos, categories, tags } from '@/data/mockData';
+import { categories, tags } from '@/data/mockData';
 
 const Index = () => {
-  // For demonstration, we're using our mock data
-  const latestVideos = [...videos].sort((a, b) => 
-    new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
-  
-  const trendingVideos = [...videos].sort((a, b) => b.views - a.views);
-  
   return (
     <MainLayout>
       <SeoHead 
@@ -26,13 +19,11 @@ const Index = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div className="lg:col-span-3">
-          <VideoGrid videos={trendingVideos} title="Trending Videos" />
+          <TrendingVideos />
           
           <div className="my-8">
             <AdBanner size="banner" />
           </div>
-          
-          <VideoGrid videos={latestVideos} title="Latest Videos" />
         </div>
         
         <div className="space-y-8">
