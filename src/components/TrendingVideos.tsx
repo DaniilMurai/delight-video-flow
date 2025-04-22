@@ -4,23 +4,27 @@ import { Skeleton } from "@/components/ui/skeleton";
 import VideoThumbnail from './VideoThumbnail';
 import { Video } from '@/types/video';
 import { fetchVideosFromSources } from '@/lib/videoFetcher';
+import { toast } from "@/components/ui/sonner";
+import { useNavigate } from 'react-router-dom';
 
 const TrendingVideos = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadVideos = async () => {
       try {
         setIsLoading(true);
-        // This function simulates fetching from external sources
+        // This function fetches from external sources (simulated)
         const fetchedVideos = await fetchVideosFromSources();
         setVideos(fetchedVideos);
         setError(null);
       } catch (err) {
         console.error('Failed to fetch videos:', err);
         setError('Unable to load videos at this time. Please try again later.');
+        toast.error('Failed to load videos. Please try again.');
       } finally {
         setIsLoading(false);
       }
@@ -29,18 +33,54 @@ const TrendingVideos = () => {
     loadVideos();
   }, []);
 
+  const handleRetry = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const fetchedVideos = await fetchVideosFromSources();
+      setVideos(fetchedVideos);
+      toast.success('Videos refreshed successfully!');
+    } catch (err) {
+      console.error('Failed to refresh videos:', err);
+      setError('Unable to load videos at this time. Please try again later.');
+      toast.error('Failed to refresh videos. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVideoClick = (videoId: string) => {
+    navigate(`/video/${videoId}`);
+  };
+
   return (
     <div className="trending-videos">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Trending Videos</h2>
-        <div className="text-sm text-muted-foreground">
-          Sourced from popular adult sites
+        <div className="flex items-center gap-2">
+          {!isLoading && (
+            <button 
+              onClick={handleRetry} 
+              className="text-primary text-sm hover:underline"
+            >
+              Refresh
+            </button>
+          )}
+          <div className="text-sm text-muted-foreground">
+            From Pornhub & Xvideos
+          </div>
         </div>
       </div>
       
       {error && (
         <div className="bg-destructive/10 text-destructive p-4 rounded-md mb-4">
-          {error}
+          <p>{error}</p>
+          <button 
+            onClick={handleRetry}
+            className="mt-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Try Again
+          </button>
         </div>
       )}
       
@@ -66,6 +106,7 @@ const TrendingVideos = () => {
               date={video.date}
               views={video.views}
               source={video.source}
+              onClick={() => handleVideoClick(video.id)}
             />
           ))}
         </div>

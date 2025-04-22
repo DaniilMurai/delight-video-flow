@@ -10,6 +10,7 @@ import SeoHead from '@/components/SeoHead';
 import { Video } from '@/types/video';
 import { fetchVideoById, fetchRelatedVideos } from '@/lib/videoFetcher';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/components/ui/sonner';
 
 const VideoPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +46,7 @@ const VideoPage = () => {
       } catch (err) {
         console.error('Failed to load video:', err);
         setError('Unable to load this video. Please try another one.');
+        toast.error('Failed to load video details');
       } finally {
         setIsLoading(false);
       }
@@ -116,6 +118,38 @@ const VideoPage = () => {
     return `PT${minutes}M${seconds}S`;
   };
   
+  // Get source-specific details
+  const getSourceDetails = () => {
+    switch(video.source) {
+      case 'pornhub':
+        return {
+          name: 'Pornhub',
+          color: 'text-orange-500',
+          link: `https://www.pornhub.com/view_video.php?viewkey=${video.id.replace('ph', '')}`
+        };
+      case 'xvideos':
+        return {
+          name: 'Xvideos',
+          color: 'text-red-500',
+          link: `https://www.xvideos.com/video${video.id.replace('xv', '')}`
+        };
+      case 'xhamster':
+        return {
+          name: 'xHamster',
+          color: 'text-yellow-500',
+          link: `https://xhamster.com/videos/${video.id}`
+        };
+      default:
+        return {
+          name: 'External Source',
+          color: 'text-primary',
+          link: '#'
+        };
+    }
+  };
+  
+  const sourceDetails = getSourceDetails();
+  
   return (
     <MainLayout>
       <SeoHead 
@@ -135,7 +169,7 @@ const VideoPage = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div className="lg:col-span-3">
-          <VideoPlayer embedUrl={video.embedUrl} title={video.title} />
+          <VideoPlayer embedUrl={video.embedUrl} title={video.title} source={video.source} />
           
           <div className="my-4">
             <VideoMetadata video={video} />
@@ -158,7 +192,14 @@ const VideoPage = () => {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Source:</span>
-                <span>{video.source}</span>
+                <a 
+                  href={sourceDetails.link} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className={`${sourceDetails.color} hover:underline`}
+                >
+                  {sourceDetails.name}
+                </a>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Duration:</span>

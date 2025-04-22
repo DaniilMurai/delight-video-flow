@@ -2,6 +2,7 @@
 import React from 'react';
 import VideoThumbnail from './VideoThumbnail';
 import { Video } from '@/types/video';
+import { useNavigate } from 'react-router-dom';
 
 interface VideoGridProps {
   videos: Video[];
@@ -9,6 +10,12 @@ interface VideoGridProps {
 }
 
 const VideoGrid: React.FC<VideoGridProps> = ({ videos, title }) => {
+  const navigate = useNavigate();
+
+  const handleVideoClick = (videoId: string) => {
+    navigate(`/video/${videoId}`);
+  };
+
   return (
     <div className="video-grid">
       {title && <h2 className="text-2xl font-bold mb-4">{title}</h2>}
@@ -23,6 +30,8 @@ const VideoGrid: React.FC<VideoGridProps> = ({ videos, title }) => {
             duration={video.duration}
             date={video.date}
             views={video.views}
+            source={video.source}
+            onClick={() => handleVideoClick(video.id)}
           />
         ))}
       </div>
